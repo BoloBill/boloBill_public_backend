@@ -18,40 +18,40 @@ export const googleLogin = asyncHandler(async (req, res) => {
     console.log("Incoming Token:", idToken.substring(0, 20));
 
     // 🔹 1. Verify Firebase token
-    // const decoded = await admin.auth().verifyIdToken(idToken);
+    const decoded = await admin.auth().verifyIdToken(idToken);
 
-    // console.log("DECODED TOKEN:", decoded); // 🔥 IMPORTANT
+    console.log("DECODED TOKEN:", decoded); // 🔥 IMPORTANT
 
-    // const { uid, email, name, picture } = decoded;
+    const { uid, email, name, picture } = decoded;
 
-    // if (!email) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Email not found in token",
-    //   });
-    // }
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not found in token",
+      });
+    }
 
     // 🔹 2. Check if user exists
-    // let user = await userModel.findOne({ email });
+    let user = await userModel.findOne({ email });
 
     // 🔹 3. If not → create user
-    // if (!user) {
-    // //   user = await userModel.create({
-    // //     name: name || "No Name",
-    //     email,
-    //     avatar: picture || "",
-    //     firebaseId: uid,
-    //   });
-    // }
+    if (!user) {
+      user = await userModel.create({
+        name: name || "No Name",
+        email,
+        avatar: picture || "",
+        firebaseId: uid,
+      });
+    }
 
     // 🔹 4. Generate JWT
-    // const token = generateToken(user._id);
+    const token = generateToken(user._id);
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token: null,
-      user:{name:"ghanshyam",email:"ghanshyam@example.com",avatar:"https://example.com/avatar.jpg",shopName:"Ghanshyam's Store",address:"123 Main St",phone:"1234567890",gstin:"GSTIN1234",businessCategory:"Retail"},
+      token,
+      user,
     });
 
   } catch (error) {
