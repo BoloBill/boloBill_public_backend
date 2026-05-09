@@ -1,4 +1,4 @@
-import admin from "../config/firebaseAdmin.js";
+import admin from '../config/firebase.js';
 import asyncHandler from "express-async-handler";
 import userModel from "../models/userModal.js";
 
