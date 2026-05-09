@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
+// import testFunction from "./utils/testfile.js";
 
 
 
@@ -29,6 +30,8 @@ app.use("/api/products", productRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
+
+//  testFunction();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

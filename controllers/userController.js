@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import admin from "../config/firebase.js";
+import admin from '../config/firebase.js';
 import userModel from "../models/userModal.js";
 import generateToken from "../utils/generateJwtToken.js";
 
@@ -19,6 +19,8 @@ export const googleLogin = asyncHandler(async (req, res) => {
 
     // 🔹 1. Verify Firebase token
     const decoded = await admin.auth().verifyIdToken(idToken);
+    console.log("🔥 TOKEN AUD:", decoded.aud);
+    console.log("🔥 TOKEN ISS:", decoded.iss);
 
     console.log("DECODED TOKEN:", decoded); // 🔥 IMPORTANT
 
