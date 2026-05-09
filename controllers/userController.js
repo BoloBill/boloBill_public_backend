@@ -14,7 +14,6 @@ export const googleLogin = asyncHandler(async (req, res) => {
   }
 
   try {
-    console.log("Incoming Token:", idToken.substring(0, 20));
 
     // 1. Verify Firebase token
     const decoded = await admin.auth().verifyIdToken(idToken);
@@ -104,6 +103,33 @@ export const updateAccount = asyncHandler(async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update account",
+    });
+  }
+});
+
+// 🔹 Get current user profile
+export const getMe = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user; // set by protect middleware
+
+    const user = await userModel.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch user",
     });
   }
 });
