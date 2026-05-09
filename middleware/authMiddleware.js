@@ -1,11 +1,11 @@
-import jwt from "jsonwebtoken";
+import admin from "../config/firebaseAdmin.js";
 import asyncHandler from "express-async-handler";
-import userModel from "../models/userModal.js"; 
+import userModel from "../models/userModal.js";
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // 🔹 1. Get token from header or cookies
+  // 1. Get token from header or cookies
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -15,7 +15,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     token = req.cookies.token;
   }
 
-  // 🔹 2. Check if token exists
+  // 2. Check if token exists
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -24,11 +24,11 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    // 🔹 3. Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // 3. Verify Firebase token (replaces jwt.verify)
+    const decoded = await admin.auth().verifyIdToken(token);
 
-    // 🔹 4. Attach user to request
-    const user = await userModel.findById(decoded.id).select("-password");
+    // 4. Find user in DB using email from Firebase token
+    const user = await userModel.findOne({ email: decoded.email });
 
     if (!user) {
       return res.status(401).json({
@@ -37,14 +37,16 @@ export const protect = asyncHandler(async (req, res, next) => {
       });
     }
 
-    req.user = user._id; // you were using req.user as userId ✔️
-    req.userData = user; // optional full user
+    req.user = user._id;
+    req.userData = user;
 
     next();
+
   } catch (error) {
+    console.log("🔥 PROTECT ERROR:", error.message);
     return res.status(401).json({
       success: false,
-      message: "Invalid token",
+      message: "Invalid or expired token",
     });
   }
 });
