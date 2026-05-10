@@ -12,4 +12,5 @@ router.put("/update", protect, updateAccount);
 
 router.get("/me", protect, getMe);
 
+
 export default router;
