@@ -159,6 +159,27 @@ export const deleteInvoice = asyncHandler(async (req, res) => {
   }
 });
 
+// get all invoices for a user
+export const getUserInvoices = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const invoices = await invoiceModel
+      .find({ user: userId })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      invoices,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch invoices",
+    });
+  }
+});
+
 // Generate pdf bill 
 import PDFDocument from "pdfkit";
 
@@ -204,4 +225,123 @@ export const generateBillPDF = asyncHandler(async (req, res) => {
   doc.text("Thank you!", { align: "center" });
 
   doc.end();
+});
+
+
+export const reportSummery = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user;
+
+    const invoices = await invoiceModel.find({ user: userId }).lean();
+
+    if (!invoices || invoices.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          totalRevenue: 0,
+          totalInvoices: 0,
+          topProduct: '',
+          topProductUnits: 0,
+          revenueGrowth: 0,
+          invoiceGrowth: 0,
+        },
+      });
+    }
+
+    const totalInvoices = invoices.length;
+
+    const totalRevenue = invoices.reduce((sum, invoice) => {
+      return sum + Number(invoice.totalAmount || invoice.grandTotal || invoice.total || 0);
+    }, 0);
+
+    const productMap = {};
+
+    invoices.forEach(invoice => {
+      const items = invoice.items || invoice.products || [];
+
+      items.forEach(item => {
+        const name =
+          item.name ||
+          item.productName ||
+          item.title ||
+          item?.product?.name ||
+          'Unknown Product';
+
+        const quantity = Number(item.quantity || item.qty || 0);
+
+        if (!productMap[name]) {
+          productMap[name] = 0;
+        }
+
+        productMap[name] += quantity;
+      });
+    });
+
+    let topProduct = '';
+    let topProductUnits = 0;
+
+    Object.entries(productMap).forEach(([name, units]) => {
+      if (units > topProductUnits) {
+        topProduct = name;
+        topProductUnits = units;
+      }
+    });
+
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    const currentMonthInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      return invoiceDate >= currentMonthStart;
+    });
+
+    const previousMonthInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      return invoiceDate >= previousMonthStart && invoiceDate <= previousMonthEnd;
+    });
+
+    const currentMonthRevenue = currentMonthInvoices.reduce((sum, invoice) => {
+      return sum + Number(invoice.totalAmount || invoice.grandTotal || invoice.total || 0);
+    }, 0);
+
+    const previousMonthRevenue = previousMonthInvoices.reduce((sum, invoice) => {
+      return sum + Number(invoice.totalAmount || invoice.grandTotal || invoice.total || 0);
+    }, 0);
+
+    const currentMonthInvoiceCount = currentMonthInvoices.length;
+    const previousMonthInvoiceCount = previousMonthInvoices.length;
+
+    const revenueGrowth =
+      previousMonthRevenue === 0
+        ? currentMonthRevenue > 0
+          ? 100
+          : 0
+        : ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+
+    const invoiceGrowth =
+      previousMonthInvoiceCount === 0
+        ? currentMonthInvoiceCount > 0
+          ? 100
+          : 0
+        : ((currentMonthInvoiceCount - previousMonthInvoiceCount) / previousMonthInvoiceCount) * 100;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalRevenue,
+        totalInvoices,
+        topProduct,
+        topProductUnits,
+        revenueGrowth: Number(revenueGrowth.toFixed(1)),
+        invoiceGrowth: Number(invoiceGrowth.toFixed(1)),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate report',
+    });
+  }
 });

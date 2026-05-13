@@ -1,11 +1,12 @@
 import express from "express";
 import {
   createInvoice,
-  // getAllInvoices,
+  getUserInvoices,
   getSingleInvoice,
   updateInvoice,
   deleteInvoice,
-  generateBillPDF
+  generateBillPDF,
+  reportSummery,
 } from "../controllers/invoiceController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -13,7 +14,8 @@ import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.post("/", protect, createInvoice);
-// router.get("/", protect, getAllInvoices);
+router.get("/", protect, getUserInvoices);
+router.get("/reports/summary", protect, reportSummery);
 router.get("/:id", protect, getSingleInvoice);
 router.put("/:id", protect, updateInvoice);
 router.delete("/:id", protect, deleteInvoice);

@@ -28,11 +28,16 @@ const productSchema = new mongoose.Schema(
             enum: ["kg", "gram", "piece", "litre"],
         },
 
+        imageUri:{
+            type: String,
+        },
+
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
+
     },
     { timestamps: true }
 );
