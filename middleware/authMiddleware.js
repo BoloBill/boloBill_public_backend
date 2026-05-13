@@ -25,6 +25,7 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     // 3. Verify Firebase token (replaces jwt.verify)
+    console.log(token);
     const decoded = await admin.auth().verifyIdToken(token);
 
     // 4. Find user in DB using email from Firebase token
