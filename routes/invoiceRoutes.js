@@ -7,6 +7,7 @@ import {
   deleteInvoice,
   generateBillPDF,
   reportSummery,
+  getIncomeGraph
 } from "../controllers/invoiceController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.post("/", protect, createInvoice);
 router.get("/", protect, getUserInvoices);
+router.get("/income-graph", protect, getIncomeGraph);
 router.get("/reports/summary", protect, reportSummery);
 router.get("/:id", protect, getSingleInvoice);
 router.put("/:id", protect, updateInvoice);

@@ -345,3 +345,225 @@ export const reportSummery = asyncHandler(async (req, res) => {
     });
   }
 });
+
+export const getIncomeGraph = asyncHandler(
+  async (req, res) => {
+    try {
+      const userId = req.user._id;
+
+      const { range = 'week' } =
+        req.query;
+
+      const now = new Date();
+
+      let startDate;
+
+      // 🔹 Set range
+      if (range === 'today') {
+        startDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+      } else if (range === 'week') {
+        startDate = new Date();
+
+        startDate.setDate(
+          now.getDate() - 6,
+        );
+
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0,
+        );
+      } else if (range === 'month') {
+        startDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1,
+        );
+      } else if (range === 'year') {
+        startDate = new Date(
+          now.getFullYear(),
+          0,
+          1,
+        );
+      }
+
+      // 🔹 Fetch invoices
+      const invoices =
+        await invoiceModel.find({
+          user: userId,
+          createdAt: {
+            $gte: startDate,
+          },
+        });
+
+      let labels = [];
+      let graphData = [];
+
+      // 🔹 TODAY
+      if (range === 'today') {
+        labels = [
+          '12AM',
+          '3AM',
+          '6AM',
+          '9AM',
+          '12PM',
+          '3PM',
+          '6PM',
+          '9PM',
+        ];
+
+        graphData = new Array(8).fill(
+          0,
+        );
+
+        invoices.forEach(invoice => {
+          const hour = new Date(
+            invoice.createdAt,
+          ).getHours();
+
+          const index =
+            Math.floor(hour / 3);
+
+          graphData[index] +=
+            invoice.finalAmount || 0;
+        });
+      }
+
+      // 🔹 WEEK
+      else if (range === 'week') {
+        labels = [
+          'Mon',
+          'Tue',
+          'Wed',
+          'Thu',
+          'Fri',
+          'Sat',
+          'Sun',
+        ];
+
+        graphData = new Array(7).fill(
+          0,
+        );
+
+        invoices.forEach(invoice => {
+          const date = new Date(
+            invoice.createdAt,
+          );
+
+          let day =
+            date.getDay();
+
+          // convert Sunday
+          day = day === 0 ? 6 : day - 1;
+
+          graphData[day] +=
+            invoice.finalAmount || 0;
+        });
+      }
+
+      // 🔹 MONTH
+      else if (range === 'month') {
+        const daysInMonth =
+          new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+          ).getDate();
+
+        labels = Array.from(
+          { length: daysInMonth },
+          (_, i) => `${i + 1}`,
+        );
+
+        graphData = new Array(
+          daysInMonth,
+        ).fill(0);
+
+        invoices.forEach(invoice => {
+          const day =
+            new Date(
+              invoice.createdAt,
+            ).getDate() - 1;
+
+          graphData[day] +=
+            invoice.finalAmount || 0;
+        });
+      }
+
+      // 🔹 YEAR
+      else if (range === 'year') {
+        labels = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+
+        graphData = new Array(12).fill(
+          0,
+        );
+
+        invoices.forEach(invoice => {
+          const month =
+            new Date(
+              invoice.createdAt,
+            ).getMonth();
+
+          graphData[month] +=
+            invoice.finalAmount || 0;
+        });
+      }
+
+      // 🔹 Total Revenue
+      const totalRevenue =
+        graphData.reduce(
+          (sum, item) => sum + item,
+          0,
+        );
+
+      // 🔹 Example split
+      const collected =
+        totalRevenue * 0.78;
+
+      const pending =
+        totalRevenue - collected;
+
+      return res.status(200).json({
+        success: true,
+
+        data: {
+          range,
+
+          labels,
+
+          graphData,
+
+          totalRevenue,
+
+          collected,
+
+          pending,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message:
+          'Failed to load income graph',
+      });
+    }
+  },
+);
