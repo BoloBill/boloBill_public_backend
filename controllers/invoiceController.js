@@ -184,47 +184,120 @@ export const getUserInvoices = asyncHandler(async (req, res) => {
 import PDFDocument from "pdfkit";
 
 export const generateBillPDF = asyncHandler(async (req, res) => {
-  const invoice = await invoiceModel.findById(req.params.id).populate("user");
 
-  const doc = new PDFDocument();
+  try {
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    `inline; filename=invoice-${invoice.invoiceNumber}.pdf`
-  );
+    const invoice = await invoiceModel
+      .findById(req.params.id)
+      .populate("user");
 
-  doc.pipe(res);
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found",
+      });
+    }
 
-  // 🔹 Header
-  doc.fontSize(18).text(invoice.user.shopName, { align: "center" });
-  doc.moveDown();
+    const doc = new PDFDocument();
 
-  doc.fontSize(12).text(`Invoice No: ${invoice.invoiceNumber}`);
-  doc.text(`Date: ${new Date(invoice.createdAt).toLocaleString()}`);
+    res.setHeader("Content-Type", "application/pdf");
 
-  doc.moveDown();
-  doc.text(`Customer: ${invoice.customerName || "N/A"}`);
-  doc.text(`Phone: ${invoice.customerPhone || "N/A"}`);
-
-  doc.moveDown();
-
-  // 🔹 Table
-  invoice.products.forEach((item) => {
-    doc.text(
-      `${item.name} - ${item.quantity} ${item.unit} x ₹${item.price} = ₹${item.total}`
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=invoice-${invoice.invoiceNumber}.pdf`
     );
-  });
 
-  doc.moveDown();
-  doc.text(`Total: ₹${invoice.totalAmount}`);
-  doc.text(`Discount: ₹${invoice.discount}`);
-  doc.text(`Final Amount: ₹${invoice.finalAmount}`);
+    doc.pipe(res);
 
-  doc.moveDown();
-  doc.text("Thank you!", { align: "center" });
+    // ================= HEADER =================
 
-  doc.end();
+    doc
+      .fontSize(18)
+      .text(invoice?.user?.shopName || "My Shop", {
+        align: "center",
+      });
+
+    doc.moveDown();
+
+    doc
+      .fontSize(12)
+      .text(`Invoice No: ${invoice?.invoiceNumber || "N/A"}`);
+
+    doc.text(
+      `Date: ${new Date(invoice.createdAt).toLocaleString()}`
+    );
+
+    doc.moveDown();
+
+    doc.text(
+      `Customer: ${invoice?.customerName || "N/A"}`
+    );
+
+    doc.text(
+      `Phone: ${invoice?.customerPhone || "N/A"}`
+    );
+
+    doc.moveDown();
+
+    // ================= PRODUCTS =================
+
+    if (
+      invoice.products &&
+      invoice.products.length > 0
+    ) {
+
+      invoice.products.forEach((item) => {
+
+        doc.text(
+          `${item?.name || "Item"} - 
+${item?.quantity || 0} ${item?.unit || ""} 
+x ₹${item?.price || 0} 
+= ₹${item?.total || 0}`
+        );
+
+      });
+
+    } else {
+
+      doc.text("No products found");
+
+    }
+
+    doc.moveDown();
+
+    // ================= TOTALS =================
+
+    doc.text(
+      `Total: ₹${invoice?.totalAmount || 0}`
+    );
+
+    doc.text(
+      `Discount: ₹${invoice?.discount || 0}`
+    );
+
+    doc.text(
+      `Final Amount: ₹${invoice?.finalAmount || 0}`
+    );
+
+    doc.moveDown();
+
+    doc.text("Thank you!", {
+      align: "center",
+    });
+
+    doc.end();
+
+  } catch (error) {
+
+    console.log("PDF ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+
 });
 
 
