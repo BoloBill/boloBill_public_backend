@@ -189,7 +189,7 @@ export const generateBillPDF = asyncHandler(async (req, res) => {
 
     const invoice = await invoiceModel
       .findById(req.params.id)
-      .populate("user");
+      .populate("users");
 
     if (!invoice) {
       return res.status(404).json({
@@ -213,7 +213,7 @@ export const generateBillPDF = asyncHandler(async (req, res) => {
 
     doc
       .fontSize(18)
-      .text(invoice?.user?.shopName || "My Shop", {
+      .text(invoice?.users?.shopName || "My Shop", {
         align: "center",
       });
 
