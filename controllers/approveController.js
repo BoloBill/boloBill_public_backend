@@ -4,27 +4,45 @@ import userModal from "../models/userModal.js";
 
 export const approveSeller = asyncHandler(async (req, res) => {
   try {
-    const { email } = req.body; 
+    const { requestId } = req.body;
     const adminId = req.user;
 
     const adminUser = await userModal.findById(adminId);
 
-    if(adminUser.types !== "admin") {
+    if (!adminUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    if (adminUser.types !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Unauthorized: Only admins can approve sellers",
       });
     }
 
-    const request = await ApprovalModel.findOne({email}).populate('shopkeeper');
+    // FIND REQUEST
+    const request = await ApprovalModel.findOne({ _id: requestId }).populate("shopkeeper");
 
-    if (
-      request.status !== 'pending'
-    ) {
+    console.log("REQUEST ID:", requestId);
+    console.log("REQUEST:", request);
+
+
+    // IMPORTANT FIX
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Approval request not found",
+      });
+    }
+
+    // NOW SAFE
+    if (request.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message:
-          'Request already processed',
+        message: "Request already processed",
       });
     }
 
@@ -33,32 +51,30 @@ export const approveSeller = asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message:
-          'Shopkeeper not found',
+        message: "Shopkeeper not found",
       });
     }
 
     user.approve = true;
-
     user.requestAdmin = false;
 
     await user.save();
 
-    // IMPORTANT
-    request.status = 'approved';
+    request.status = "approved";
 
     await request.save();
 
     return res.status(200).json({
       success: true,
-      message:
-        'Seller approved successfully',
+      message: "Seller approved successfully",
     });
+
   } catch (error) {
+    console.log(error);
+
     return res.status(500).json({
       success: false,
-      message:
-        'Failed to approve seller',
+      message: "Failed to approve seller",
       error: error.message,
     });
   }
