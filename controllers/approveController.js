@@ -6,41 +6,58 @@ export const approveSeller = asyncHandler(async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const request = await ApprovalModel.findById(requestId).populate("shopkeeper");
+    const request =
+      await ApprovalModel.findById({ _id: requestId }).populate('shopkeeper');
+
     if (!request) {
       return res.status(404).json({
         success: false,
-        message: "Approval request not found",
+        message:
+          'Approval request not found',
       });
     }
 
-    if (request.status !== "pending") {
+    if (
+      request.status !== 'pending'
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Request already processed",
+        message:
+          'Request already processed',
       });
     }
 
     const user = request.shopkeeper;
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Shopkeeper not found",
+        message:
+          'Shopkeeper not found',
       });
     }
 
     user.approve = true;
+
     user.requestAdmin = false;
+
     await user.save();
+
+    // IMPORTANT
+    request.status = 'approved';
+
+    await request.save();
 
     return res.status(200).json({
       success: true,
-      message: "Seller approved successfully",
+      message:
+        'Seller approved successfully',
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to approve seller",
+      message:
+        'Failed to approve seller',
       error: error.message,
     });
   }
