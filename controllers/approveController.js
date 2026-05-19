@@ -33,9 +33,6 @@ export const approveSeller = asyncHandler(async (req, res) => {
     user.requestAdmin = false;
     await user.save();
 
-    request.status = "approved";
-    await request.save();
-
     return res.status(200).json({
       success: true,
       message: "Seller approved successfully",
