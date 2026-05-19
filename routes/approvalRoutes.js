@@ -5,6 +5,8 @@ import {
   getPendingApprovals,
 } from "../controllers/approveController.js";
 
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
 // Shopkeeper sends approval request
@@ -14,6 +16,6 @@ router.post("/request", requestSellerApproval);
 router.get("/pending", getPendingApprovals);
 
 // Admin approves a specific request
-router.put("/approve/:requestId", approveSeller);
+router.put("/approve",protect, approveSeller);
 
 export default router;

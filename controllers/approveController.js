@@ -4,18 +4,19 @@ import userModal from "../models/userModal.js";
 
 export const approveSeller = asyncHandler(async (req, res) => {
   try {
-    const { requestId } = req.params;
+    const { email } = req.body; 
+    const adminId = req.user;
 
-    const request =
-      await ApprovalModel.findById({ _id: requestId }).populate('shopkeeper');
+    const adminUser = await userModal.findById(adminId);
 
-    if (!request) {
-      return res.status(404).json({
+    if(adminUser.types !== "admin") {
+      return res.status(403).json({
         success: false,
-        message:
-          'Approval request not found',
+        message: "Unauthorized: Only admins can approve sellers",
       });
     }
+
+    const request = await ApprovalModel.findOne({email}).populate('shopkeeper');
 
     if (
       request.status !== 'pending'
