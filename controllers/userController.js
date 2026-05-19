@@ -14,7 +14,6 @@ export const googleLogin = asyncHandler(async (req, res) => {
   }
 
   try {
-
     // 1. Verify Firebase token
     const decoded = await admin.auth().verifyIdToken(idToken);
 
@@ -133,6 +132,9 @@ export const getMe = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+
 
 // Income Graph Data Controller
 

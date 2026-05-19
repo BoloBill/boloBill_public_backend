@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
+import approvalRoutes from "./routes/approvalRoutes.js";
 
 
 
@@ -25,6 +26,7 @@ connectDB();
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/api/admin", approvalRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/products", productRoutes);
 

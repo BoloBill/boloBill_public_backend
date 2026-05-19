@@ -17,6 +17,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    approve:{
+      type: Boolean,
+      default: false,
+    },
+    requestAdmin:{
+      type: Boolean,
+      default: false,
+    },
+    types:{
+        type: String,
+        enum: ["shopkeeper","admin"],
+        default: "shopkeeper",
+    },
     address: {
       type: String,
       default: '',
