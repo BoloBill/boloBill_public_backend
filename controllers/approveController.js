@@ -5,7 +5,6 @@ import userModal from "../models/userModal.js";
 export const approveSeller = asyncHandler(async (req, res) => {
   try {
     const { requestId } = req.body;
-    
     const adminId = req.user;
 
     const adminUser = await userModal.findById(adminId);
