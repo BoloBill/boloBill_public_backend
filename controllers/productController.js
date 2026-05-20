@@ -7,6 +7,12 @@ const addProduct = asyncHandler( async (req,res)=>{
          const userId = req.user;
          const {name,aliases,price,unit} = req.body;
 
+         const existingProduct = await productModal.findOne({ name, userId });
+
+         if (existingProduct) {
+            return res.status(400).json({message:"Product with the same name already exists",success:false});
+         }
+
          const product = await productModal.create({
             name,
             aliases,
